@@ -150,11 +150,13 @@ class oracleDb{
     	
     }
     
-    /**
-     * 删除
-     * 
-     * @return mixed 影响行数
-     */
+	/**
+	 * 删除
+	 * 
+	 * @param string $table
+	 * @param string $condition
+	 * @return boolean|number
+	 */
     public function delete($table,$condition){
     	$this->sql = "delete from {$table}";    	
     	if(!empty($condition)) $this->sql .= ' WHERE ' .$condition;
@@ -187,7 +189,6 @@ class oracleDb{
 	 * 查询，返回二维数组
 	 * 
 	 * @param string $sql
-	 * @param boolean $islob
 	 * @return mixed
 	 */
 	public function getRow($sql){
@@ -202,7 +203,6 @@ class oracleDb{
 	 * 查询，返回二维数组
 	 * 
 	 * @param string $sql
-	 * @param boolean $islob
 	 * @return mixed
 	 */
 	public function getAll($sql){
@@ -276,7 +276,7 @@ class oracleDb{
 	/**
 	 * 获取表的所有字段
 	 * 
-	 * @param strint $tableName
+	 * @param string $table
 	 * @return mixed
 	 */
 	public function getFields($table){		
