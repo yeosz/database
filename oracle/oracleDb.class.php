@@ -17,11 +17,14 @@
 class oracleDb{
 	
 	public	$conn;
+	public	$table;
+	public	$tablePrefix;
 	private $error;
 	private $ociError;
 	private $ociFetchModes;//OCI_BOTH,OCI_ASSOC,OCI_NUM ,OCI_RETURN_NULLS,OCI_RETURN_LOBS
 	private $ociExecuteModel;//OCI_COMMIT_ON_SUCCESS||OCI_NO_AUTO_COMMIT
 	private $sql;
+	
 	
 	public function __construct($dbhost='', $dbuser='', $dbpw='',$charset='utf8') {
 		$this->conn = oci_connect($dbuser, $dbpw, $dbhost,$charset);  
@@ -32,6 +35,7 @@ class oracleDb{
 
 		$this->ociFetchModes = OCI_ASSOC + OCI_RETURN_LOBS + OCI_RETURN_NULLS;
 		$this->ociExecuteModel = OCI_COMMIT_ON_SUCCESS;
+		$this->tablePrefix = '';
     }
 	
     private function ociExecute($stid,$model=null){
@@ -43,6 +47,17 @@ class oracleDb{
     		return true;
     	}
     	 
+    }
+    
+    /**
+     * 设置要操作的表
+     * 
+     * @param string $table
+     */
+    public function table($table='',$tablePrefix=null){
+    	if(isset($tablePrefix)) $this->tablePrefix = $tablePrefix;
+    	$this->table = $this->tablePrefix . $table;   
+    	return $this;	
     }
     
     /**
@@ -70,8 +85,8 @@ class oracleDb{
      * @param array $data 数据
      * @return mixed 插入的ID/结果
      */
-    public function insert($table,$data,$bind=array()){
-		$this->sql = array("INSERT INTO {$table} (",'',') VALUES (','',')');
+    public function insert($data,$bind=array()){
+		$this->sql = array("INSERT INTO {$this->table} (",'',') VALUES (','',')');
 		
     	foreach($data as $key=>&$v){
     		$this->sql[1] = $this->sql[1] . $key . ',';
@@ -118,8 +133,8 @@ class oracleDb{
      * @param array $bind
      * @return number|boolean
      */
-    public function update($table,$data,$condition,$bind=array()){
-    	$this->sql = "update {$table} set ";    	
+    public function update($data,$condition,$bind=array()){
+    	$this->sql = "update {$this->table} set ";    	
     	foreach($data as $key=>&$v){
     		if(preg_match('/(to_date\()|(to_char\()|(to_number\()|(\.nextval)/i', $v)){
     			$this->sql .= $key.'='.$v . ',';
@@ -157,8 +172,8 @@ class oracleDb{
 	 * @param string $condition
 	 * @return boolean|number
 	 */
-    public function delete($table,$condition){
-    	$this->sql = "delete from {$table}";    	
+    public function delete($condition){
+    	$this->sql = "delete from {$this->table}";    	
     	if(!empty($condition)) $this->sql .= ' WHERE ' .$condition;
     	$stid = oci_parse($this->conn,$this->sql); 
     	if(!$this->ociExecute($stid)){
@@ -314,13 +329,12 @@ class oracleDb{
 	 * 获取错误
 	 * 
 	 */
-	public function error(){		
+	public function error($error=null){	
 		return $this->error ? $this->error : $this->ociError;
 	}
 	
 	public function sql(){
-		echo $this->sql ? $this->sql : '';
-		return $this;
+		return $this->sql ? $this->sql : '';
 	}
 	
 	public function __toString(){
