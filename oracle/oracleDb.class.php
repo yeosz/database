@@ -336,7 +336,7 @@ class oracleDb{
 	}
 	
 	public function __toString(){
-		echo $this->sql ? $this->sql : '';
+	 	return $this->sql ? $this->sql : '';
 	}
 	
 	public function __destruct(){	
