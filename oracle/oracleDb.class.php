@@ -17,13 +17,13 @@
 class oracleDb{
 	
 	public	$conn;
-	public	$table;
-	public	$tablePrefix;
-	private $error;
-	private $ociError;
+	public	$table			= '';
+	public	$tablePrefix 	= '';
+	private $error 			= '';
+	private $ociError 		= '';
 	private $ociFetchModes;//OCI_BOTH,OCI_ASSOC,OCI_NUM ,OCI_RETURN_NULLS,OCI_RETURN_LOBS
 	private $ociExecuteModel;//OCI_COMMIT_ON_SUCCESS||OCI_NO_AUTO_COMMIT
-	private $sql;
+	private $sql			= '';
 	
 	
 	public function __construct($dbhost='', $dbuser='', $dbpw='',$charset='utf8') {
@@ -35,7 +35,6 @@ class oracleDb{
 
 		$this->ociFetchModes = OCI_ASSOC + OCI_RETURN_LOBS + OCI_RETURN_NULLS;
 		$this->ociExecuteModel = OCI_COMMIT_ON_SUCCESS;
-		$this->tablePrefix = '';
     }
 	
     private function ociExecute($stid,$model=null){
