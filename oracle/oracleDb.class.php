@@ -32,7 +32,6 @@ class oracleDb{
 			$e = oci_error();  
 			die(htmlentities($e['message'])); 
 		}
-
 		$this->ociFetchModes = OCI_ASSOC + OCI_RETURN_LOBS + OCI_RETURN_NULLS;
 		$this->ociExecuteModel = OCI_COMMIT_ON_SUCCESS;
     }
