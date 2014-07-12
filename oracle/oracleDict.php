@@ -1,5 +1,10 @@
 <?php
-
+/**
+ * 生成orale数据字典
+ *
+ * @authoer ye.osz@qq.com
+ * @version 1.0
+ */
 include 'oracleDb.class.php';
 
 header("Content-type: text/html; charset=utf-8");
@@ -8,7 +13,7 @@ $doc_title = '数据库设计文档';
 $config = array('host'=>'//192.168.1.113/orcl','user'=>'ZENWAY','password'=>'ZENWAY');
 $db = new oracleDb($config['host'],$config['user'], $config['password']);
 
-
+//所有表
 $sql = "select * from user_tab_comments where TABLE_TYPE='TABLE'";
 $result = $db->getAll($sql);
 $tables = array();
@@ -16,14 +21,33 @@ foreach($result as $id=>$v){
 	$tables[$v['TABLE_NAME']] = $v;
 }
 
-
-$sql = "select a.COMMENTS,b.* from user_col_comments a left join user_tab_columns b on a.TABLE_NAME=B.TABLE_NAME AND a.COLUMN_NAME=b.COLUMN_NAME";
+//所有字段
+$sql = "select a.COMMENTS,b.* from user_col_comments a 
+		left join user_tab_columns b on a.TABLE_NAME=B.TABLE_NAME AND a.COLUMN_NAME=b.COLUMN_NAME";
 $fields = $db->getAll($sql);
 
+//所有主键
+$sql = "SELECT a.TABLE_NAME||'.'||A.COLUMN_NAME FROM user_cons_columns a 
+		left join user_constraints b on a.constraint_name=b.constraint_name
+		WHERE b.constraint_type='P'";
+$primary = $db->getCol($sql);
+
+//所有外键
+$sql = "SELECT a.TABLE_NAME||'.'||a.COLUMN_NAME as key ,C.OWNER||'.'||c.TABLE_NAME||'.'||c.COLUMN_NAME as value FROM user_cons_columns a 
+	left join user_constraints b on a.constraint_name=b.constraint_name
+	left join user_cons_columns c on b.r_constraint_name=c.constraint_name
+	WHERE b.constraint_type='R'";
+$result = $db->getAll($sql);
+$foreignkey = array();
+foreach($result as $v){
+	$foreignkey[$v['KEY']] = $v['VALUE'];	
+}
 
 foreach($fields as $id=>$v){
 	$tables[$v['TABLE_NAME']]['COLUMN'][] = $v;
 }
+
+//print_r($primary);print_r($tables);die;
 
 $html = '';
 //循环所有表
@@ -44,16 +68,20 @@ foreach ($tables as $k=>$v) {
 	$html .= '</tr>';
 	$html .= '</thead><tbody>';
 
-	foreach ($v['COLUMN'] as $f) {
+	foreach ($v['COLUMN'] as $f) {		
 		
+		//$primary
+		$isPrimary = in_array($v['TABLE_NAME'].'.'.$f['COLUMN_NAME'],$primary) ? '是' : '';
+		$isAbleNull = $f['NULLABLE']=='Y' ? '是' : '';
+		$foreignkeyStr = isset($foreignkey[$v['TABLE_NAME'].'.'.$f['COLUMN_NAME']]) ? $foreignkey[$v['TABLE_NAME'].'.'.$f['COLUMN_NAME']] : '';
 		
 		$html .= '<tr>';
 		$html .= '<td class="w120">' . $f['COLUMN_NAME'] . '</td>';
 		$html .= '<td class="w120">' . $f['DATA_TYPE'].'('.$f['DATA_LENGTH'].')' . '</td>';			
 		$html .= '<td class="w80 text-center">' .$f['DATA_DEFAULT'] . '</td>';
-		$html .= '<td class="w80 text-center">' . $f['NULLABLE'] . '</td>';
-		$html .= '<td class="w80 text-center">' . '' . '</td>';
-		$html .= '<td class="w80 text-center">' . '' . '</td>';
+		$html .= '<td class="w80 text-center">' . $isAbleNull . '</td>';
+		$html .= '<td class="w80 text-center">' . $isPrimary . '</td>';
+		$html .= '<td class="w80 text-center">' . $foreignkeyStr . '</td>';
 		$html .= '<td class="w300">' . $f['COMMENTS'] . '</td>';
 		$html .= '</tr>';
 		
