@@ -1,14 +1,10 @@
 数据库
 ========
 
-MySql
----------------------------------------------------
-###操作类
-  mysqlDb.class.php
-###生成MySQL数据字典
-  mysqlDict.php
-###MySQL函数
-  mysqlFunction.sql
+###MySql
+操作类-------------------------------mysqlDb.class.php
+MySQL数据字典------------------------mysqlDict.php
+MySQL函数----------------------------mysqlFunction.sql
 
 
 Oracle
