@@ -20,11 +20,11 @@ class oracleDb{
 	public	$table			= '';
 	public	$tablePrefix 	= '';
 	private $error 			= '';
-	private $ociError 		= '';
+	private $ociError 		= '';	
+	private $sql			= '';
+	private $regex 			= '/(to_date\()|(to_char\()|(to_number\()|(\.nextval)/i';
 	private $ociFetchModes;//OCI_BOTH,OCI_ASSOC,OCI_NUM ,OCI_RETURN_NULLS,OCI_RETURN_LOBS
 	private $ociExecuteModel;//OCI_COMMIT_ON_SUCCESS||OCI_NO_AUTO_COMMIT
-	private $sql			= '';
-	
 	
 	public function __construct($dbhost='', $dbuser='', $dbpw='',$charset='utf8') {
 		$this->conn = oci_connect($dbuser, $dbpw, $dbhost,$charset);  
@@ -84,11 +84,12 @@ class oracleDb{
      * @return mixed 插入的ID/结果
      */
     public function insert($data,$bind=array()){
+
 		$this->sql = array("INSERT INTO {$this->table} (",'',') VALUES (','',')');
 		
     	foreach($data as $key=>&$v){
     		$this->sql[1] = $this->sql[1] . $key . ',';
-    		if(preg_match('/(to_date\()|(to_char\()|(to_number\()|(\.nextval)/i', $v)){
+    		if(preg_match($this->regex, $v)){
     			if(preg_match('/(\.nextval)/i',$v)) $sequence = $v;
     			$this->sql[3] .= $v . ',';
     		}else{
@@ -102,7 +103,7 @@ class oracleDb{
     	
     	$stid = oci_parse($this->conn,$this->sql);    	
     	foreach($data as $key=>&$v){
-    		if(preg_match('/(to_date\()|(to_char\()|(to_number\()|(\.nextval)/i', $v)) continue;
+    		if(preg_match($this->regex, $v)) continue;
     		/*if(isset($bind[$key])){
     			oci_bind_by_name($stid, ":{$key}", $v,-1,$bind[$key]);   
     		}else{
@@ -134,7 +135,7 @@ class oracleDb{
     public function update($data,$condition,$bind=array()){
     	$this->sql = "update {$this->table} set ";    	
     	foreach($data as $key=>&$v){
-    		if(preg_match('/(to_date\()|(to_char\()|(to_number\()|(\.nextval)/i', $v)){
+    		if(preg_match($this->regex, $v)){
     			$this->sql .= $key.'='.$v . ',';
     		}else{
     			$this->sql .= $key.'= :'.$key . ',';
@@ -144,7 +145,7 @@ class oracleDb{
     	if(!empty($condition)) $this->sql .= ' WHERE ' .$condition;
     	$stid = oci_parse($this->conn,$this->sql);
     	foreach($data as $key=>&$v){
-    		if(preg_match('/(to_date\()|(to_char\()|(to_number\()|(\.nextval)/i', $v)) continue;
+    		if(preg_match($this->regex, $v)) continue;
     		/*
     		if(isset($bind[$key])){
     			oci_bind_by_name($stid, ":{$key}", $v,-1,$bind[$key]);
