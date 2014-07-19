@@ -10,7 +10,7 @@ include 'oracleDb.class.php';
 header("Content-type: text/html; charset=utf-8");
 $doc_title = '数据库设计文档';
 
-$config = array('host'=>'//192.168.1.113/orcl','user'=>'ZENWAY','password'=>'ZENWAY');
+$config = array('host'=>'//192.168.1.113/orcl','user'=>'PHP','password'=>'PHP');
 $db = new oracleDb($config['host'],$config['user'], $config['password']);
 
 //所有表
