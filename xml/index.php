@@ -2,6 +2,7 @@
 
 $doc = simplexml_load_file('LocList.xml');
 
+/*
 $cou = $doc->CountryRegion;
 $country = array();
 foreach($cou as $id=>$v){	
@@ -17,9 +18,17 @@ foreach($cou as $id=>$v){
 	}
 };
 print_r($country);
+*/
+
+
+$arr = object2array($doc);
+print_r($arr);die;
 
 
 
+function object2array($object) {
+	return @json_decode(@json_encode($object),1);
+}
 
 
 
