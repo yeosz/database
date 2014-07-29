@@ -3,7 +3,7 @@
  * 生成mysql数据字典
  * 
  * @authoer ye.osz@qq.com
- * @version 1.0 
+ * @version 2.0 
  */
 $doc_title = '数据库设计文档';
 header("Content-type: text/html; charset=utf-8");
@@ -13,6 +13,7 @@ $dbserver   = 'localhost';
 $dbusername = 'php';
 $dbpassword = 'php';
 $database   = 'php';
+
 //其他配置
 $mysql_conn = @mysql_connect($dbserver, $dbusername, $dbpassword) or die('MySQL connect is error');
 mysql_select_db($database, $mysql_conn);
@@ -50,6 +51,19 @@ while ($t = mysql_fetch_array($foreignkey_result,MYSQL_ASSOC) ) {
 }
 //print_r($foreignkey);die;
 
+//取得所有的触发器
+$triggers = $temp = array();
+$sql = "show TRIGGERS";
+$triggers_result = mysql_query($sql, $mysql_conn);
+while($row = mysql_fetch_array($triggers_result,MYSQL_ASSOC)){
+	$temp[] = $row;	
+}
+foreach($temp as $v){
+	$triggers[$v['Table']][] = array('name'=>$v['Trigger'],'event'=>$v['Event'],'tatement'=>$v['Statement'],'timing'=>$v['Timing']);
+}
+//print_r($triggers);die;
+
+
 //循环取得所有表的备注及表中列消息
 foreach ($tables as $k=>$v) {
     $sql  = 'SELECT * FROM ';
@@ -69,9 +83,9 @@ mysql_close($mysql_conn);
 $html = '';
 //循环所有表
 foreach ($tables as $k=>$v) {
-    $html .= "\n";
-	
+    $html .= "\n";	
     $html .= '<table>';	
+	//字段
     $html .= '<thead>';
 	$html .= '<tr><th colspan="7">' . $v['TABLE_COMMENT'] .'&nbsp;'. $v['TABLE_NAME']. ' </th><th>'.$v['ENGINE'].'</th></tr>';
 	$html .= '<tr>';
@@ -84,8 +98,7 @@ foreach ($tables as $k=>$v) {
 	$html .= '<td>外键关系</td>';
 	$html .= '<td>备注</td>';
 	$html .= '</tr>';
-	$html .= '</thead><tbody>';
-	
+	$html .= '</thead><tbody>';	
     foreach ($v['COLUMN'] as $f) {
 		if(!isset($no_show_field[$v['TABLE_NAME']]) || !is_array($no_show_field[$v['TABLE_NAME']])){
 			$no_show_field[$v['TABLE_NAME']] = array();
@@ -106,6 +119,28 @@ foreach ($tables as $k=>$v) {
 		}
     }
     $html .= '</tbody>';
+	
+	//触发器
+	if(isset($triggers[$v['TABLE_NAME']])){
+		$html .= '<thead>';
+		$html .= '<tr>';
+		$html .= '<td>触发器名称</td>';
+		$html .= '<td>触发</td>';
+		$html .= '<td>类型</td>';
+		$html .= '<td colspan="5">定义</td>';
+		$html .= '</tr>';
+		$html .= '</thead><tbody>';
+		foreach($triggers[$v['TABLE_NAME']] as $t){
+			$html .= '<tr>';
+			$html .= '<td class="w120">' . $t['name'] . '</td>';
+			$html .= '<td class="w120 text-center">' . $t['timing'] . '</td>';
+			$html .= '<td class="w80 text-center">' . $t['event'] . '</td>';
+			$html .= '<td colspan="5">' . $t['tatement'] . '</td>';
+			$html .= '</tr>';	
+			$html .= '</tbody>';
+		}
+	}
+	
 	$html .= '</table>'."\n";
 }
 ?>
