@@ -1,6 +1,6 @@
 <?php
 /**
- * 生成mysql数据字典
+ * 生成mysql数据文档（字典+主外键关系+触发器）
  * 
  * @authoer ye.osz@qq.com
  * @version 2.0 
