@@ -1,6 +1,6 @@
 <?php
 /**
- * 生成mysql数据文档（字典+主外键关系+触发器）
+ * 生成mysql数据文档（字段+主外键关系+触发器）
  * 
  * @authoer ye.osz@qq.com
  * @version 2.0 
@@ -20,10 +20,10 @@ mysql_select_db($database, $mysql_conn);
 mysql_query('SET NAMES UTF8');
 
 $no_show_table = array();    //不需要显示的表
-$no_show_field = array();   //不需要显示的字段
+$no_show_field = array();   //不需要显示的字段,二维数组，表名为KEY
 
 //取得所有的表名
-$sql = "SELECT TABLE_NAME,TABLE_COMMENT,TABLE_TYPE,ENGINE FROM information_schema.TABLES where TABLE_SCHEMA='{$database}'";
+$sql = "SELECT TABLE_NAME,TABLE_COMMENT,TABLE_TYPE,ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA='{$database}'";
 $table_result = mysql_query($sql, $mysql_conn);
 while($row = mysql_fetch_array($table_result,MYSQL_ASSOC)){
 	if(!in_array($row['TABLE_NAME'],$no_show_table)){
@@ -32,7 +32,7 @@ while($row = mysql_fetch_array($table_result,MYSQL_ASSOC)){
 }
 
 //获取所有主键
-$sql = "SELECT TABLE_SCHEMA,TABLE_NAME,COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE where CONSTRAINT_NAME='PRIMARY' AND TABLE_SCHEMA='{$database}'";
+$sql = "SELECT TABLE_SCHEMA,TABLE_NAME,COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE CONSTRAINT_NAME='PRIMARY' AND TABLE_SCHEMA='{$database}'";
 $primary_result= mysql_query($sql, $mysql_conn);
 $primary = array();
 while ($t = mysql_fetch_array($primary_result,MYSQL_ASSOC) ) {
@@ -41,9 +41,9 @@ while ($t = mysql_fetch_array($primary_result,MYSQL_ASSOC) ) {
 //print_r($primary);die;
 
 //取得所有外键
-$sql = "SELECT concat(table_name, '.', column_name) AS foreignkey,concat(REFERENCED_TABLE_SCHEMA,'.',referenced_table_name,'.',referenced_column_name) AS field
-	FROM information_schema.key_column_usage
-	WHERE table_schema = '{$database}' AND referenced_table_name IS NOT NULL";
+$sql = "SELECT concat(table_name, '.', column_name) AS foreignkey,concat(REFERENCED_TABLE_SCHEMA,'.',REFERENCED_TABLE_NAME,'.',REFERENCED_COLUMN_NAME) AS field
+	FROM information_schema.KEY_COLUMN_USAGE
+	WHERE table_schema = '{$database}' AND REFERENCED_TABLE_NAME IS NOT NULL";
 $foreignkey_result= mysql_query($sql, $mysql_conn);
 $foreignkey = array();
 while ($t = mysql_fetch_array($foreignkey_result,MYSQL_ASSOC) ) {
