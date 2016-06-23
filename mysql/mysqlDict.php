@@ -1,13 +1,12 @@
 <?php
 /**
- * 生成mysql数据文档（字段+主外键关系+触发器）
+ * 生成mysql数据文档（字段+主外键关系+触发器+索引）
  * 
  * @authoer ye.osz@qq.com
- * @version 2.0 
+ * @version 3.0 
  */
 $doc_title = '数据库设计文档';
 header("Content-type: text/html; charset=utf-8");
-
 //配置数据库
 $dbserver   = 'localhost';
 $dbusername = 'php';
@@ -18,10 +17,8 @@ $database   = 'php';
 $mysql_conn = @mysql_connect($dbserver, $dbusername, $dbpassword) or die('MySQL connect is error');
 mysql_select_db($database, $mysql_conn);
 mysql_query('SET NAMES UTF8');
-
 $no_show_table = array();    //不需要显示的表
 $no_show_field = array();   //不需要显示的字段,二维数组，表名为KEY
-
 //取得所有的表名
 $sql = "SELECT TABLE_NAME,TABLE_COMMENT,TABLE_TYPE,ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA='{$database}'";
 $table_result = mysql_query($sql, $mysql_conn);
@@ -30,7 +27,6 @@ while($row = mysql_fetch_array($table_result,MYSQL_ASSOC)){
 		$tables[] = array('TABLE_NAME'=>$row['TABLE_NAME'],'TABLE_COMMENT'=>$row['TABLE_COMMENT'],'TABLE_TYPE'=>$row['TABLE_TYPE'],'ENGINE'=>$row['ENGINE']);
 	}
 }
-
 //获取所有主键
 $sql = "SELECT TABLE_SCHEMA,TABLE_NAME,COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE CONSTRAINT_NAME='PRIMARY' AND TABLE_SCHEMA='{$database}'";
 $primary_result= mysql_query($sql, $mysql_conn);
@@ -39,7 +35,6 @@ while ($t = mysql_fetch_array($primary_result,MYSQL_ASSOC) ) {
         $primary[] = $t['TABLE_SCHEMA'].'.'.$t['TABLE_NAME'].'.'. $t['COLUMN_NAME'];
 }
 //print_r($primary);die;
-
 //取得所有外键
 $sql = "SELECT concat(table_name, '.', column_name) AS foreignkey,concat(REFERENCED_TABLE_SCHEMA,'.',REFERENCED_TABLE_NAME,'.',REFERENCED_COLUMN_NAME) AS field
 	FROM information_schema.KEY_COLUMN_USAGE
@@ -50,7 +45,6 @@ while ($t = mysql_fetch_array($foreignkey_result,MYSQL_ASSOC) ) {
         $foreignkey[$t['foreignkey']] = str_replace($database.'.','',$t['field']);
 }
 //print_r($foreignkey);die;
-
 //取得所有的触发器
 $triggers = $temp = array();
 $sql = "show TRIGGERS";
@@ -61,9 +55,17 @@ while($row = mysql_fetch_array($triggers_result,MYSQL_ASSOC)){
 foreach($temp as $v){
 	$triggers[$v['Table']][] = array('name'=>$v['Trigger'],'event'=>$v['Event'],'tatement'=>$v['Statement'],'timing'=>$v['Timing']);
 }
-//print_r($triggers);die;
-
-
+//取得所有索引
+$sql = "SELECT t.table_name,t.index_name,GROUP_CONCAT(t.column_name) AS column_name,t.index_type,t.non_unique FROM
+	( SELECT table_name,index_name,column_name,index_type,non_unique FROM information_schema.STATISTICS WHERE INDEX_SCHEMA = '{$database}' AND index_name!='PRIMARY' ORDER BY index_name ASC, seq_in_index ASC ) t 
+	GROUP BY t.table_name, t.index_name";
+$index_result = mysql_query($sql, $mysql_conn);
+$index = array();
+while ($t = mysql_fetch_array($index_result, MYSQL_ASSOC) ) {
+	if(!isset($index[$t['table_name']])) $index[$t['table_name']] = array();
+    $index[$t['table_name']][] = $t;
+}
+//print_r($index);die;
 //循环取得所有表的备注及表中列消息
 foreach ($tables as $k=>$v) {
     $sql  = 'SELECT * FROM ';
@@ -79,7 +81,6 @@ foreach ($tables as $k=>$v) {
 }
 mysql_close($mysql_conn);
 //print_r($tables);die;
-
 $html = '';
 //循环所有表
 foreach ($tables as $k=>$v) {
@@ -136,6 +137,26 @@ foreach ($tables as $k=>$v) {
 			$html .= '<td class="w120 text-center">' . $t['timing'] . '</td>';
 			$html .= '<td class="w80 text-center">' . $t['event'] . '</td>';
 			$html .= '<td colspan="5">' . $t['tatement'] . '</td>';
+			$html .= '</tr>';	
+			$html .= '</tbody>';
+		}
+	}
+	// 索引
+	if(isset($index[$v['TABLE_NAME']])){
+		$html .= '<thead>';
+		$html .= '<tr>';
+		$html .= '<td>索引名称</td>';
+		$html .= '<td>唯一索引</td>';
+		$html .= '<td>索引类型</td>';
+		$html .= '<td colspan="5">字段</td>';
+		$html .= '</tr>';
+		$html .= '</thead><tbody>';
+		foreach($index[$v['TABLE_NAME']] as $t){
+			$html .= '<tr>';
+			$html .= '<td class="w120">' . $t['index_name'] . '</td>';			
+			$html .= '<td class="w80 text-center">' . ($t['non_unique'] ? '是' : '否') . '</td>';
+			$html .= '<td class="w120 text-center">' . $t['index_type'] . '</td>';
+			$html .= '<td colspan="5">' . $t['column_name'] . '</td>';
 			$html .= '</tr>';	
 			$html .= '</tbody>';
 		}
