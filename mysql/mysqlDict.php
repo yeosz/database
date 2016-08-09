@@ -1,9 +1,9 @@
 <?php
 /**
- * 生成mysql数据文档（字段+主外键关系+触发器+索引）
+ * 生成mysql数据文档（字段+主外键关系+触发器）
  * 
  * @authoer ye.osz@qq.com
- * @version 3.0 
+ * @version 4.0 
  */
 $doc_title = '数据库设计文档';
 header("Content-type: text/html; charset=utf-8");
@@ -12,7 +12,6 @@ $dbserver   = 'localhost';
 $dbusername = 'php';
 $dbpassword = 'php';
 $database   = 'php';
-
 //其他配置
 $mysql_conn = @mysql_connect($dbserver, $dbusername, $dbpassword) or die('MySQL connect is error');
 mysql_select_db($database, $mysql_conn);
@@ -88,8 +87,9 @@ foreach ($tables as $k=>$v) {
     $html .= '<table>';	
 	//字段
     $html .= '<thead>';
-	$html .= '<tr><th colspan="7">' . $v['TABLE_COMMENT'] .'&nbsp;'. $v['TABLE_NAME']. ' </th><th>'.$v['ENGINE'].'</th></tr>';
+	$html .= '<tr><th colspan="8">' . $v['TABLE_COMMENT'] .'&nbsp;'. $v['TABLE_NAME']. ' </th><th>'.$v['ENGINE'].'</th></tr>';
 	$html .= '<tr>';
+	$html .= '<td>序号</td>';
 	$html .= '<td>字段名</td>';
 	$html .= '<td>数据类型</td>';
 	$html .= '<td>默认值</td>';
@@ -100,7 +100,7 @@ foreach ($tables as $k=>$v) {
 	$html .= '<td>备注</td>';
 	$html .= '</tr>';
 	$html .= '</thead><tbody>';	
-    foreach ($v['COLUMN'] as $f) {
+    foreach ($v['COLUMN'] as $r=>$f) {
 		if(!isset($no_show_field[$v['TABLE_NAME']]) || !is_array($no_show_field[$v['TABLE_NAME']])){
 			$no_show_field[$v['TABLE_NAME']] = array();
 		}
@@ -108,6 +108,7 @@ foreach ($tables as $k=>$v) {
 		$foreignkeyStr = isset($foreignkey[$f['TABLE_NAME'].'.'.$f['COLUMN_NAME']]) ? $foreignkey[$f['TABLE_NAME'].'.'.$f['COLUMN_NAME']] : '';
 		if(!in_array($f['COLUMN_NAME'],$no_show_field[$v['TABLE_NAME']])){
 			$html .= '<tr>';
+			$html .= '<td class="w50 text-center">' . ($r+1) . '</td>';
 			$html .= '<td class="w120">' . $f['COLUMN_NAME'] . '</td>';
 			$html .= '<td class="w120">' . $f['COLUMN_TYPE'] . '</td>';
 			$html .= '<td class="w80 text-center">' . $f['COLUMN_DEFAULT'] . '</td>';
@@ -125,7 +126,7 @@ foreach ($tables as $k=>$v) {
 	if(isset($triggers[$v['TABLE_NAME']])){
 		$html .= '<thead>';
 		$html .= '<tr>';
-		$html .= '<td>触发器名称</td>';
+		$html .= '<td colspan="2">触发器名称</td>';
 		$html .= '<td>触发</td>';
 		$html .= '<td>类型</td>';
 		$html .= '<td colspan="5">定义</td>';
@@ -133,7 +134,7 @@ foreach ($tables as $k=>$v) {
 		$html .= '</thead><tbody>';
 		foreach($triggers[$v['TABLE_NAME']] as $t){
 			$html .= '<tr>';
-			$html .= '<td class="w120">' . $t['name'] . '</td>';
+			$html .= '<td colspan="2" class="w120">' . $t['name'] . '</td>';
 			$html .= '<td class="w120 text-center">' . $t['timing'] . '</td>';
 			$html .= '<td class="w80 text-center">' . $t['event'] . '</td>';
 			$html .= '<td colspan="5">' . $t['tatement'] . '</td>';
@@ -145,7 +146,7 @@ foreach ($tables as $k=>$v) {
 	if(isset($index[$v['TABLE_NAME']])){
 		$html .= '<thead>';
 		$html .= '<tr>';
-		$html .= '<td>索引名称</td>';
+		$html .= '<td colspan="2">索引名称</td>';
 		$html .= '<td>唯一索引</td>';
 		$html .= '<td>索引类型</td>';
 		$html .= '<td colspan="5">字段</td>';
@@ -153,7 +154,7 @@ foreach ($tables as $k=>$v) {
 		$html .= '</thead><tbody>';
 		foreach($index[$v['TABLE_NAME']] as $t){
 			$html .= '<tr>';
-			$html .= '<td class="w120">' . $t['index_name'] . '</td>';			
+			$html .= '<td colspan="2" class="w120">' . $t['index_name'] . '</td>';			
 			$html .= '<td class="w80 text-center">' . ($t['non_unique'] ? '是' : '否') . '</td>';
 			$html .= '<td class="w120 text-center">' . $t['index_type'] . '</td>';
 			$html .= '<td colspan="5">' . $t['column_name'] . '</td>';
@@ -180,6 +181,7 @@ table thead td { background-color:#d3d3d3;text-align: left; font-weight: bold; h
 table td { height: 20px; font-size: 14px; border: 1px solid #000; background-color: #fff; padding:5px;}
 .w120 { width: 120px; }
 .w80 { width: 80px; }
+.w50 { width: 50px; }
 .w300 { width: 300px; }
 .text-center{text-align:center;}
 </style>
