@@ -17,13 +17,14 @@ $database   = 'php';
 //其他配置
 $pdo = new PDO("mysql:host={$db_host};port={$db_port};dbname={$database}", $db_username, $db_password);
 $pdo->query('set names utf8;');
+$pdo->query('SET sql_mode ="STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION";');
 $no_show_table = array();    //不需要显示的表
 $no_show_field = array();   //不需要显示的字段,二维数组，表名为KEY
 
 //取得所有的表名
 $sql = "SELECT TABLE_NAME,TABLE_COMMENT,TABLE_TYPE,ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA='{$database}'";
 $rs = $pdo->query($sql);
-$result = $rs->fetchAll(PDO::FETCH_ASSOC);
+$result = $rs ? $rs->fetchAll(PDO::FETCH_ASSOC) : [];
 $tables = array();
 foreach($result as $row)
 {
@@ -36,7 +37,7 @@ foreach($result as $row)
 //获取所有主键
 $sql = "SELECT TABLE_SCHEMA,TABLE_NAME,COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE CONSTRAINT_NAME='PRIMARY' AND TABLE_SCHEMA='{$database}'";
 $rs = $pdo->query($sql);
-$result = $rs->fetchAll(PDO::FETCH_ASSOC);
+$result = $rs ? $rs->fetchAll(PDO::FETCH_ASSOC) : [];
 $primary = array();
 foreach($result as $t)
 {
@@ -50,7 +51,7 @@ $sql = "SELECT concat(TABLE_NAME, '.', COLUMN_NAME) AS foreignkey,concat(REFEREN
 	FROM information_schema.KEY_COLUMN_USAGE
 	WHERE TABLE_SCHEMA = '{$database}' AND REFERENCED_TABLE_NAME IS NOT NULL";
 $rs = $pdo->query($sql);
-$result = $rs->fetchAll(PDO::FETCH_ASSOC);
+$result = $rs ? $rs->fetchAll(PDO::FETCH_ASSOC) : [];
 $foreignkey = array();
 foreach($result as $t)
 {
@@ -63,7 +64,7 @@ foreach($result as $t)
 
 $sql = "show TRIGGERS";
 $rs = $pdo->query($sql);
-$result = $rs->fetchAll(PDO::FETCH_ASSOC);
+$result = $rs ? $rs->fetchAll(PDO::FETCH_ASSOC) : [];
 $triggers = array();
 foreach($result as $v){
 	$triggers[$v['Table']][] = array('name'=>$v['Trigger'],'event'=>$v['Event'],'tatement'=>$v['Statement'],'timing'=>$v['Timing']);
@@ -74,7 +75,7 @@ $sql = "SELECT t.TABLE_NAME,t.index_name,GROUP_CONCAT(t.COLUMN_NAME) AS COLUMN_N
 	( SELECT TABLE_NAME,index_name,COLUMN_NAME,index_type,non_unique FROM information_schema.STATISTICS WHERE INDEX_SCHEMA = '{$database}' AND index_name!='PRIMARY' ORDER BY index_name ASC, seq_in_index ASC ) t
 	GROUP BY t.TABLE_NAME, t.index_name";
 $rs = $pdo->query($sql);
-$result = $rs->fetchAll(PDO::FETCH_ASSOC);
+$result = $rs ? $rs->fetchAll(PDO::FETCH_ASSOC) : [];
 $index = array();
 foreach($result as $t){
     if(!isset($index[$t['TABLE_NAME']])) $index[$t['TABLE_NAME']] = array();
@@ -90,7 +91,7 @@ foreach ($tables as $k=>$v) {
     $sql .= "TABLE_NAME = '{$v['TABLE_NAME']}' AND TABLE_SCHEMA = '{$database}'";
     $fields = array();
     $rs = $pdo->query($sql);
-    $result = $rs->fetchAll(PDO::FETCH_ASSOC);
+    $result = $rs ? $rs->fetchAll(PDO::FETCH_ASSOC) : [];
     $tables[$k]['COLUMN'] = $result;
 }
 
