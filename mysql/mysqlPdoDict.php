@@ -171,7 +171,7 @@ foreach ($tables as $k=>$v) {
 		foreach($index[$v['TABLE_NAME']] as $t){
 			$html .= '<tr>';
 			$html .= '<td colspan="2" class="w120">' . $t['index_name'] . '</td>';
-			$html .= '<td class="w80 text-center">' . ($t['non_unique'] ? '是' : '否') . '</td>';
+			$html .= '<td class="w80 text-center">' . ($t['non_unique'] ? '否' : '是') . '</td>';
 			$html .= '<td class="w120 text-center">' . $t['index_type'] . '</td>';
 			$html .= '<td colspan="5">' . $t['COLUMN_NAME'] . '</td>';
 			$html .= '</tr>';
